@@ -1,0 +1,27 @@
+# Bot Telegram
+python-telegram-bot==22.7
+
+# Framework de agente
+agno==1.1.1
+
+# LLM via OpenRouter (API compatível com OpenAI)
+openai>=1.30.0,<2.0.0
+
+# PostgreSQL
+psycopg2-binary==2.9.12
+
+# Scheduler para diário automático
+APScheduler==3.11.2
+
+# Tools
+PyGithub==2.9.1
+tavily-python==0.7.24
+google-api-python-client>=2.130.0,<3.0.0
+google-auth-oauthlib>=1.2.0,<2.0.0
+google-auth-httplib2>=0.2.0,<1.0.0
+
+# Retry com backoff exponencial
+tenacity>=8.2.0,<10.0.0
+
+# Variáveis de ambiente
+python-dotenv>=1.0.0,<2.0.0
