@@ -26,9 +26,13 @@ def start_scheduler(_app=None):
         id="daily_diary",
         replace_existing=True,
     )
-    _scheduler.start()
     logger.info(
-        "Scheduler iniciado — diário automático às %02d:%02d.",
+        "Scheduler configurado — diário automático às %02d:%02d.",
         config.DIARY_HOUR,
         config.DIARY_MINUTE,
     )
+
+
+async def start_scheduler_async(app) -> None:
+    _scheduler.start()
+    logger.info("Scheduler iniciado dentro do event loop.")

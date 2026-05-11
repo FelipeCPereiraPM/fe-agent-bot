@@ -4,7 +4,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, Con
 
 import config
 from memory.manager import validate_connection, init_db
-from scheduler import start_scheduler
+from scheduler import start_scheduler, start_scheduler_async
 
 logging.basicConfig(
     level=logging.INFO,
@@ -87,13 +87,18 @@ def main():
     validate_connection()
     init_db()
 
-    app = ApplicationBuilder().token(config.TELEGRAM_BOT_TOKEN).build()
+    start_scheduler()
+
+    app = (
+        ApplicationBuilder()
+        .token(config.TELEGRAM_BOT_TOKEN)
+        .post_init(start_scheduler_async)
+        .build()
+    )
 
     app.add_handler(CommandHandler("diario", cmd_diario_date))
     app.add_handler(CommandHandler("diarios", cmd_diarios))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    start_scheduler(app)
 
     logger.info("Fe-Agent iniciado. Aguardando mensagens...")
     app.run_polling(drop_pending_updates=True)
