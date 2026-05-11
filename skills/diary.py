@@ -8,8 +8,8 @@ import config
 logger = logging.getLogger(__name__)
 
 _client = AsyncOpenAI(
-    api_key=config.OPENROUTER_API_KEY,
-    base_url=config.OPENROUTER_BASE_URL,
+    api_key=config.DEEPSEEK_API_KEY,
+    base_url=config.DEEPSEEK_BASE_URL,
 )
 
 _SYSTEM_PROMPT = """\
@@ -59,7 +59,7 @@ Gere o diário de bordo do dia com base nessa conversa.
 async def _call_llm(history: str) -> str:
     today = date.today().isoformat()
     response = await _client.chat.completions.create(
-        model=config.OPENROUTER_MODEL,
+        model=config.DEEPSEEK_MODEL,
         messages=[
             {"role": "system", "content": _SYSTEM_PROMPT.format(date=today)},
             {"role": "user", "content": _USER_PROMPT.format(history=history)},

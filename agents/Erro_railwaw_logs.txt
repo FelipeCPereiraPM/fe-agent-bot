@@ -1,0 +1,111 @@
+2026-05-11 21:45:45,954 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8735038417:AAGtwz_yl359zB46wnPiM8y7iq_Mq9gVcdI/getUpdates "HTTP/1.1 200 OK"
+2026-05-11 21:45:56,035 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8735038417:AAGtwz_yl359zB46wnPiM8y7iq_Mq9gVcdI/getUpdates "HTTP/1.1 200 OK"
+2026-05-11 21:46:06,116 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8735038417:AAGtwz_yl359zB46wnPiM8y7iq_Mq9gVcdI/getUpdates "HTTP/1.1 200 OK"
+2026-05-11 21:46:16,199 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8735038417:AAGtwz_yl359zB46wnPiM8y7iq_Mq9gVcdI/getUpdates "HTTP/1.1 200 OK"
+Starting Container
+2026-05-11 21:46:20,808 [INFO] memory.manager: Conexão com PostgreSQL validada.
+2026-05-11 21:46:20,814 [INFO] memory.manager: Banco de dados inicializado.
+2026-05-11 21:46:20,814 [INFO] apscheduler.scheduler: Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2026-05-11 21:46:20,814 [INFO] scheduler: Scheduler configurado — diário automático às 23:59.
+2026-05-11 21:46:20,839 [INFO] __main__: Fe-Agent iniciado. Aguardando mensagens...
+2026-05-11 21:46:21,132 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8735038417:AAGtwz_yl359zB46wnPiM8y7iq_Mq9gVcdI/getMe "HTTP/1.1 200 OK"
+2026-05-11 21:46:21,132 [INFO] apscheduler.scheduler: Added job "_run_diary" to job store "default"
+2026-05-11 21:46:21,132 [INFO] apscheduler.scheduler: Scheduler started
+2026-05-11 21:46:21,132 [INFO] scheduler: Scheduler iniciado dentro do event loop.
+2026-05-11 21:46:21,227 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8735038417:AAGtwz_yl359zB46wnPiM8y7iq_Mq9gVcdI/deleteWebhook "HTTP/1.1 200 OK"
+2026-05-11 21:46:21,228 [INFO] apscheduler.scheduler: Scheduler started
+2026-05-11 21:46:21,228 [INFO] telegram.ext.Application: Application started
+2026-05-11 21:46:21,509 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8735038417:AAGtwz_yl359zB46wnPiM8y7iq_Mq9gVcdI/getUpdates "HTTP/1.1 409 Conflict"
+2026-05-11 21:46:21,509 [ERROR] telegram.ext.Application: No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_utils/networkloop.py", line 161, in network_retry_loop
+    await do_action()
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_utils/networkloop.py", line 154, in do_action
+    action_cb_task.result()
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_updater.py", line 340, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 672, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/_bot.py", line 4865, in get_updates
+    await self._post(
+  File "/app/.venv/lib/python3.11/site-packages/telegram/_bot.py", line 704, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 370, in _do_post
+    return await super()._do_post(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/_bot.py", line 733, in _do_post
+    result = await request.post(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 198, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 375, in _request_wrapper
+    raise exception
+telegram.error.Conflict: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+2026-05-11 21:46:25,599 [INFO] httpx: HTTP Request: POST https://api.telegram.org/bot8735038417:AAGtwz_yl359zB46wnPiM8y7iq_Mq9gVcdI/getUpdates "HTTP/1.1 409 Conflict"
+2026-05-11 21:46:25,599 [ERROR] telegram.ext.Application: No error handlers are registered, logging exception.
+Traceback (most recent call last):
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_utils/networkloop.py", line 161, in network_retry_loop
+    await do_action()
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_utils/networkloop.py", line 154, in do_action
+    action_cb_task.result()
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_updater.py", line 340, in polling_action_cb
+    updates = await self.bot.get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 672, in get_updates
+    updates = await super().get_updates(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/_bot.py", line 4865, in get_updates
+    await self._post(
+  File "/app/.venv/lib/python3.11/site-packages/telegram/_bot.py", line 704, in _post
+    return await self._do_post(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/ext/_extbot.py", line 370, in _do_post
+    return await super()._do_post(
+  File "/app/.venv/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 375, in _request_wrapper
+  File "/app/.venv/lib/python3.11/site-packages/telegram/_bot.py", line 733, in _do_post
+    raise exception
+telegram.error.Conflict: Conflict: terminated by other getUpdates request; make sure that only one bot instance is running
+    result = await request.post(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/telegram/request/_baserequest.py", line 198, in post
+    result = await self._request_wrapper(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    response = await connection.handle_async_request(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py", line 103, in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py", line 136, in handle_async_request
+2026-05-11 21:46:29,566 [ERROR] telegram.ext.Updater: Error while calling `get_updates` one more time to mark all fetched updates. Suppressing error to ensure graceful shutdown. When polling for updates is restarted, updates may be fetched again. Please adjust timeouts via `ApplicationBuilder` or the parameter `get_updates_request` of `Bot`.
+Traceback (most recent call last):
+  File "/app/.venv/lib/python3.11/site-packages/httpx/_transports/default.py", line 101, in map_httpcore_exceptions
+    yield
+  File "/app/.venv/lib/python3.11/site-packages/httpx/_transports/default.py", line 394, in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 256, in handle_async_request
+    raise exc from None
+  File "/app/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 236, in handle_async_request
+    raise exc
+  File "/app/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py", line 106, in handle_async_request
+    ) = await self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py", line 177, in _receive_response_headers
+    event = await self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py", line 217, in _receive_event
+    data = await self._network_stream.read(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py", line 32, in read
+    with map_exceptions(exc_map):
+  File "/mise/installs/python/3.11.15/lib/python3.11/contextlib.py", line 158, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "/app/.venv/lib/python3.11/site-packages/httpcore/_exceptions.py", line 14, in map_exceptions
+    raise to_exc(exc) from exc
+httpcore.ReadTimeout
+The above exception was the direct cause of the following exception:
+Traceback (most recent call last):
