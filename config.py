@@ -24,7 +24,7 @@ AUTHORIZED_USER_ID = int(_require("AUTHORIZED_USER_ID"))
 
 # LLM
 DEEPSEEK_API_KEY = _require("DEEPSEEK_API_KEY")
-DEEPSEEK_MODEL = _optional("DEEPSEEK_MODEL", "deepseek-chat")
+DEEPSEEK_MODEL = _optional("DEEPSEEK_MODEL", "deepseek-v4-flash")
 DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1"
 
 # Busca
