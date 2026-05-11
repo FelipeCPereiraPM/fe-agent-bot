@@ -83,6 +83,11 @@ def _make_model() -> OpenAILike:
         id=config.DEEPSEEK_MODEL,
         api_key=config.DEEPSEEK_API_KEY,
         base_url=config.DEEPSEEK_BASE_URL,
+        # Desabilita o thinking mode do DeepSeek para evitar o erro 400:
+        # "The `reasoning_content` in the thinking mode must be passed back
+        # to the API." O Agno não repassa reasoning_content entre turnos,
+        # então o thinking mode precisa estar desligado explicitamente.
+        request_params={"thinking": {"type": "disabled"}},
     )
 
 
