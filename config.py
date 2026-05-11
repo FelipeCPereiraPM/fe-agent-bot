@@ -23,9 +23,9 @@ TELEGRAM_BOT_TOKEN = _require("TELEGRAM_BOT_TOKEN")
 AUTHORIZED_USER_ID = int(_require("AUTHORIZED_USER_ID"))
 
 # LLM
-OPENROUTER_API_KEY = _require("OPENROUTER_API_KEY")
-OPENROUTER_MODEL = _optional("OPENROUTER_MODEL", "google/gemini-2.0-flash-exp:free")
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+DEEPSEEK_API_KEY = _require("DEEPSEEK_API_KEY")
+DEEPSEEK_MODEL = _optional("DEEPSEEK_MODEL", "deepseek-chat")
+DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1"
 
 # Busca
 TAVILY_API_KEY = _require("TAVILY_API_KEY")
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     logger.info("Configurações carregadas com sucesso.")
     logger.info("  Telegram bot token: %s...%s", TELEGRAM_BOT_TOKEN[:6], TELEGRAM_BOT_TOKEN[-4:])
     logger.info("  Authorized user ID: %s", AUTHORIZED_USER_ID)
-    logger.info("  OpenRouter model: %s", OPENROUTER_MODEL)
+    logger.info("  DeepSeek model: %s", DEEPSEEK_MODEL)
     logger.info("  Repos pessoais: %s", GITHUB_REPOS_PERSONAL)
     logger.info("  Repos empresa: %s", GITHUB_REPOS_COMPANY)
     logger.info("  Diário automático: %02d:%02d", DIARY_HOUR, DIARY_MINUTE)
