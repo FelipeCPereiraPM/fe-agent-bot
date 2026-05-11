@@ -7,8 +7,8 @@ import config
 logger = logging.getLogger(__name__)
 
 _client = OpenAI(
-    api_key=config.OPENROUTER_API_KEY,
-    base_url=config.OPENROUTER_BASE_URL,
+    api_key=config.DEEPSEEK_API_KEY,
+    base_url=config.DEEPSEEK_BASE_URL,
 )
 
 _SYSTEM_PROMPT = """\
@@ -44,7 +44,7 @@ def run(task: str) -> str:
     logger.info("Developer: %s", task[:80])
     try:
         response = _client.chat.completions.create(
-            model=config.OPENROUTER_MODEL,
+            model=config.DEEPSEEK_MODEL,
             messages=[
                 {"role": "system", "content": _SYSTEM_PROMPT},
                 {"role": "user", "content": task},

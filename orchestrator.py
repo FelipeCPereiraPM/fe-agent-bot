@@ -80,9 +80,9 @@ Markdown conciso. Sem preâmbulo. Sem resumo no final. Sem estrelinhas motivacio
 
 def _make_model() -> OpenAILike:
     return OpenAILike(
-        id=config.OPENROUTER_MODEL,
-        api_key=config.OPENROUTER_API_KEY,
-        base_url=config.OPENROUTER_BASE_URL,
+        id=config.DEEPSEEK_MODEL,
+        api_key=config.DEEPSEEK_API_KEY,
+        base_url=config.DEEPSEEK_BASE_URL,
     )
 
 
