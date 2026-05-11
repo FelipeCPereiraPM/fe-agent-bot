@@ -11,8 +11,8 @@ Agente orquestrador pessoal do Fe, acessível via Telegram. Analisa contexto rea
 | Camada | Tecnologia |
 |---|---|
 | Interface | Telegram — `python-telegram-bot` |
-| Framework de agente | Agno |
-| LLM | Gemini 2.0 Flash via OpenRouter |
+| Cliente LLM | AsyncOpenAI (loop de tool calling próprio) |
+| LLM | DeepSeek via API oficial |
 | Memória | PostgreSQL (Railway) |
 | Web search | Tavily API |
 | GitHub | PyGithub — read-only |
@@ -27,7 +27,7 @@ Agente orquestrador pessoal do Fe, acessível via Telegram. Analisa contexto rea
 ```
 Telegram (Fe)
     ↓
-Orquestrador (Agno + Gemini 2.0 Flash / OpenRouter)
+Orquestrador (AsyncOpenAI + DeepSeek — loop de tool calling próprio)
     ↓
     ├── Responde direto
     ├── Busca contexto → GitHub / Google Agenda / n8n / Tavily
@@ -36,6 +36,8 @@ Orquestrador (Agno + Gemini 2.0 Flash / OpenRouter)
         Resposta consolidada → Telegram
 ```
 
+O orquestrador executa um loop de tool calling direto: envia a mensagem ao DeepSeek com as tools disponíveis, processa as chamadas retornadas, injeta os resultados como mensagens `tool` e repete até o modelo retornar uma resposta final sem chamadas pendentes. O histórico do dia é injetado como mensagens reais (`role: user/assistant`) antes de cada requisição. O thinking mode do DeepSeek é desabilitado via `extra_body={"thinking": {"type": "disabled"}}`.
+
 ---
 
 ## Estrutura de pastas
@@ -43,7 +45,7 @@ Orquestrador (Agno + Gemini 2.0 Flash / OpenRouter)
 ```
 fe-agent/
 ├── main.py              # Inicia o bot Telegram (com validação de USER_ID)
-├── orchestrator.py      # Agente principal (Agno) — LLM decide roteamento
+├── orchestrator.py      # Agente principal (AsyncOpenAI + loop de tool calling) — LLM decide roteamento
 ├── scheduler.py         # Geração automática do diário (APScheduler)
 ├── agents/
 │   ├── writer.py        # Sub-agente redator
@@ -61,7 +63,7 @@ fe-agent/
 ├── config.py
 ├── .env
 ├── .env.example
-└── requirements.txt     # Versões pinadas (incluindo Agno)
+└── requirements.txt     # Versões pinadas
 ```
 
 ---
@@ -72,9 +74,9 @@ fe-agent/
 TELEGRAM_BOT_TOKEN=
 AUTHORIZED_USER_ID=        # Seu Telegram user ID — obtido via @userinfobot
 
-# LLM via OpenRouter
-OPENROUTER_API_KEY=
-OPENROUTER_MODEL=google/gemini-2.0-flash-exp:free
+# LLM via DeepSeek
+DEEPSEEK_API_KEY=
+DEEPSEEK_MODEL=deepseek-chat
 
 TAVILY_API_KEY=
 
@@ -116,7 +118,7 @@ DIARY_MINUTE=0
 
 ## Sub-agentes
 
-Chamadas ao OpenRouter com system prompts distintos — não são serviços separados.
+Chamadas diretas ao DeepSeek via AsyncOpenAI com system prompts distintos — não são serviços separados. Cada sub-agente executa seu próprio loop de tool calling quando necessário.
 
 | Sub-agente | Responsabilidade |
 |---|---|
@@ -141,9 +143,9 @@ Chamadas ao OpenRouter com system prompts distintos — não são serviços sepa
 
 ### MVP (v1)
 - [ ] Bot Telegram (polling) com validação de `AUTHORIZED_USER_ID`
-- [ ] Orquestrador Agno + OpenRouter (LLM decide roteamento)
+- [ ] Orquestrador com AsyncOpenAI + DeepSeek — loop de tool calling próprio (LLM decide roteamento)
 - [ ] Memória: sessão diária + diário de bordo automático no PostgreSQL
-- [ ] Skill agendada: geração do diário ao final do dia (APScheduler ou Agno scheduler)
+- [ ] Skill agendada: geração do diário ao final do dia (APScheduler)
 - [ ] Tools: GitHub (read-only), Google Agenda (read/write), Tavily
 - [ ] Sub-agentes: redator, designer, programador
 - [ ] Deploy no Railway
@@ -165,7 +167,10 @@ Chamadas ao OpenRouter com system prompts distintos — não são serviços sepa
 - Uma função = uma responsabilidade
 - Testar cada tool isoladamente antes do deploy
 - `main.py` rejeita silenciosamente (log) qualquer mensagem de user ID não autorizado
-- Retry com backoff exponencial em toda chamada ao LLM (OpenRouter free tier tem rate limits severos)
+- Retry com backoff exponencial em toda chamada ao LLM
+- Loop de tool calling: continuar iterando enquanto o modelo retornar `tool_calls`; encerrar ao receber resposta sem chamadas pendentes
+- `extra_body={"thinking": {"type": "disabled"}}` em todas as chamadas ao DeepSeek para desabilitar o thinking mode
+- Histórico do dia injetado como mensagens reais (`role: user/assistant`) antes de cada requisição ao LLM
 - System prompts dos sub-agentes em formato XML com "Cable Mode" (sem cortesias, respostas diretas)
 - `memory/manager.py` valida a conexão PostgreSQL antes de iniciar o loop do Telegram
 
@@ -175,14 +180,13 @@ Chamadas ao OpenRouter com system prompts distintos — não são serviços sepa
 
 1. Criar bot no Telegram via @BotFather → salvar `TELEGRAM_BOT_TOKEN`
 2. Pegar seu Telegram User ID via @userinfobot → salvar `AUTHORIZED_USER_ID`
-3. Criar conta no OpenRouter → gerar API key
+3. Criar conta no DeepSeek → gerar API key
 4. Criar conta Tavily → gerar API key
 5. Criar GitHub tokens (read-only) para repos definidos
 6. Google Cloud → habilitar Calendar API → criar credenciais OAuth2 → rodar `tools/auth_google.py` localmente → salvar `GOOGLE_REFRESH_TOKEN`
 7. Provisionar PostgreSQL no Railway → salvar `DATABASE_URL`
 8. Definir quais workflows n8n serão consultados → atualizar `N8N_WORKFLOWS`
-9. Pinar versão do Agno no `requirements.txt` (`pip show agno` ou verificar PyPI)
-10. Configurar `.env` → testar tools isoladamente → deploy Railway
+9. Configurar `.env` → testar tools isoladamente → deploy Railway
 
 ---
 
@@ -192,7 +196,6 @@ Chamadas ao OpenRouter com system prompts distintos — não são serviços sepa
 |---|---|
 | Bot descoberto por terceiros | `AUTHORIZED_USER_ID` no middleware do `main.py` — rejeita silenciosamente |
 | Google OAuth expira em headless | `tools/auth_google.py` gera token localmente; refresh automático no `calendar_tool.py` |
-| OpenRouter rate limit (free tier) | Retry com backoff exponencial no orchestrator e sub-agentes |
+| DeepSeek rate limit | Retry com backoff exponencial no orchestrator e sub-agentes |
 | Repos da empresa expostos | Token mínimo, repos explícitos no `.env` |
-| Agno update quebra schema PostgreSQL | Versão pinada no `requirements.txt`; `manager.py` valida conexão no startup |
 | Memória crescendo | Gestão de sessões via Telegram (`/sessions`, `/delete`) |

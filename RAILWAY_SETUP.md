@@ -53,8 +53,8 @@ Guia passo a passo para configurar o projeto e o PostgreSQL no Railway.
 ```
 TELEGRAM_BOT_TOKEN        = seu_token_aqui
 AUTHORIZED_USER_ID        = seu_user_id_aqui
-OPENROUTER_API_KEY        = sua_chave_aqui
-OPENROUTER_MODEL          = google/gemini-2.0-flash-exp:free
+DEEPSEEK_API_KEY          = sua_chave_aqui
+DEEPSEEK_MODEL            = deepseek-chat
 TAVILY_API_KEY            = sua_chave_aqui
 GITHUB_TOKEN_PERSONAL     = seu_token_aqui
 GITHUB_TOKEN_COMPANY      = seu_token_aqui
