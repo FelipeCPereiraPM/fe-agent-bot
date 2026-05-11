@@ -1,10 +1,7 @@
 # Bot Telegram
 python-telegram-bot==22.7
 
-# Framework de agente
-agno==1.1.1
-
-# LLM via OpenRouter (API compatível com OpenAI)
+# LLM (API compatível com OpenAI — usado para DeepSeek, sub-agentes e diário)
 openai>=1.30.0,<2.0.0
 
 # PostgreSQL

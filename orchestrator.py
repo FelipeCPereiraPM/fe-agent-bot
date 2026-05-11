@@ -1,7 +1,7 @@
+import json
 import logging
-from agno.agent import Agent
-from agno.models.openai import OpenAILike
-from agno.tools import tool
+from openai import AsyncOpenAI
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 import config
 from tools.search_tool import search as tavily_search
@@ -14,6 +14,11 @@ from tools.github_tool import (
 )
 
 logger = logging.getLogger(__name__)
+
+_client = AsyncOpenAI(
+    api_key=config.DEEPSEEK_API_KEY,
+    base_url=config.DEEPSEEK_BASE_URL,
+)
 
 _SYSTEM_PROMPT = """\
 <identity>
@@ -52,24 +57,12 @@ Felipe: "Que você acha dessa ideia?"
 Contra: [aponta o problema principal primeiro, depois o que funciona, depois a sugestão]
 </examples>
 
-<tools_available>
-- search: busca na web via Tavily — use para qualquer informação atual ou externa
-- github_list_repos: lista os repositórios do Felipe (pessoal + empresa)
-- github_recent_commits: últimos commits de um repositório específico
-- github_open_prs: pull requests abertos de um repositório
-- github_open_issues: issues abertas de um repositório
-- github_get_file: conteúdo de um arquivo específico de um repositório
-- ask_writer: aciona o sub-agente redator para textos, emails, copy
-- ask_designer: aciona o sub-agente designer para conceito visual, briefing, UX
-- ask_developer: aciona o sub-agente programador para código, arquitetura, debug
-</tools_available>
-
 <routing>
 Use sub-agentes quando a tarefa exigir profundidade especializada:
 - Texto para humanos (email, post, copy) → ask_writer
 - Conceito visual, feedback de design, briefing → ask_designer
 - Código, arquitetura, debug, revisão técnica → ask_developer
-Para tudo o resto, responda diretamente — você não precisa de ajuda para perguntas simples.
+Para tudo o resto, responda diretamente.
 </routing>
 
 <output-format>
@@ -77,84 +70,197 @@ Markdown conciso. Sem preâmbulo. Sem resumo no final. Sem estrelinhas motivacio
 </output-format>
 """
 
+# --- Definição das ferramentas (OpenAI function calling) ---
 
-def _make_model() -> OpenAILike:
-    return OpenAILike(
-        id=config.DEEPSEEK_MODEL,
-        api_key=config.DEEPSEEK_API_KEY,
-        base_url=config.DEEPSEEK_BASE_URL,
-    )
+_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "search",
+            "description": "Busca informações atuais na web. Use para eventos recentes, documentação, preços, notícias ou qualquer dado externo.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Termo de busca"}
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "github_list_repos",
+            "description": "Lista todos os repositórios GitHub do Felipe (pessoal e empresa) com descrição.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "github_recent_commits",
+            "description": "Retorna os últimos commits de um repositório.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "repo_name": {"type": "string", "description": "Nome completo do repo (ex: usuario/repo)"},
+                    "limit": {"type": "integer", "description": "Número de commits (padrão: 5)"},
+                },
+                "required": ["repo_name"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "github_open_prs",
+            "description": "Lista os pull requests abertos de um repositório.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "repo_name": {"type": "string", "description": "Nome completo do repo"}
+                },
+                "required": ["repo_name"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "github_open_issues",
+            "description": "Lista as issues abertas de um repositório.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "repo_name": {"type": "string", "description": "Nome completo do repo"}
+                },
+                "required": ["repo_name"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "github_get_file",
+            "description": "Retorna o conteúdo de um arquivo de um repositório.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "repo_name": {"type": "string", "description": "Nome completo do repo"},
+                    "file_path": {"type": "string", "description": "Caminho do arquivo"},
+                    "branch": {"type": "string", "description": "Branch (padrão: main)"},
+                },
+                "required": ["repo_name", "file_path"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "ask_writer",
+            "description": "Aciona o sub-agente redator para criar ou melhorar textos: emails, posts, copy, narrativas.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "task": {"type": "string", "description": "Descrição detalhada da tarefa de escrita"}
+                },
+                "required": ["task"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "ask_designer",
+            "description": "Aciona o sub-agente designer para conceito visual, briefing criativo, feedback de UX/UI.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "task": {"type": "string", "description": "Descrição detalhada da tarefa de design"}
+                },
+                "required": ["task"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "ask_developer",
+            "description": "Aciona o sub-agente programador para código, arquitetura, debug, revisão técnica.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "task": {"type": "string", "description": "Descrição detalhada da tarefa técnica"}
+                },
+                "required": ["task"],
+            },
+        },
+    },
+]
 
 
-# --- Tools registradas no Agno ---
+# --- Despacho de ferramentas ---
 
-@tool(description="Busca informações atuais na web. Use para qualquer pergunta sobre eventos recentes, documentação, preços, notícias ou qualquer dado externo.")
-def search(query: str) -> str:
-    return tavily_search(query)
-
-
-@tool(description="Lista todos os repositórios GitHub do Felipe (pessoal e empresa) com descrição.")
-def github_list_repos() -> str:
-    return list_repos()
-
-
-@tool(description="Retorna os últimos commits de um repositório. Parâmetro: nome completo do repo (ex: 'usuario/repo').")
-def github_recent_commits(repo_name: str, limit: int = 5) -> str:
-    return get_recent_commits(repo_name, limit)
-
-
-@tool(description="Lista os pull requests abertos de um repositório.")
-def github_open_prs(repo_name: str) -> str:
-    return list_open_prs(repo_name)
-
-
-@tool(description="Lista as issues abertas de um repositório.")
-def github_open_issues(repo_name: str) -> str:
-    return list_open_issues(repo_name)
-
-
-@tool(description="Retorna o conteúdo de um arquivo de um repositório. Parâmetros: repo_name, file_path, branch (padrão: main).")
-def github_get_file(repo_name: str, file_path: str, branch: str = "main") -> str:
-    return get_file(repo_name, file_path, branch)
+def _dispatch(name: str, args: dict) -> str:
+    if name == "search":
+        return tavily_search(args["query"])
+    if name == "github_list_repos":
+        return list_repos()
+    if name == "github_recent_commits":
+        return get_recent_commits(args["repo_name"], args.get("limit", 5))
+    if name == "github_open_prs":
+        return list_open_prs(args["repo_name"])
+    if name == "github_open_issues":
+        return list_open_issues(args["repo_name"])
+    if name == "github_get_file":
+        return get_file(args["repo_name"], args["file_path"], args.get("branch", "main"))
+    if name == "ask_writer":
+        from agents.writer import run as writer_run
+        return writer_run(args["task"])
+    if name == "ask_designer":
+        from agents.designer import run as designer_run
+        return designer_run(args["task"])
+    if name == "ask_developer":
+        from agents.developer import run as developer_run
+        return developer_run(args["task"])
+    return f"Ferramenta desconhecida: {name}"
 
 
-@tool(description="Aciona o sub-agente redator para criar ou melhorar textos: emails, posts, copy, narrativas, mensagens para clientes.")
-def ask_writer(task: str) -> str:
-    from agents.writer import run as writer_run
-    return writer_run(task)
+# --- Loop principal de inferência ---
 
-
-@tool(description="Aciona o sub-agente designer para conceito visual, briefing criativo, feedback de UX/UI, paletas, estrutura de apresentações.")
-def ask_designer(task: str) -> str:
-    from agents.designer import run as designer_run
-    return designer_run(task)
-
-
-@tool(description="Aciona o sub-agente programador para código, arquitetura de sistemas, debug, revisão técnica, escolha de tecnologias.")
-def ask_developer(task: str) -> str:
-    from agents.developer import run as developer_run
-    return developer_run(task)
-
-
-# --- Agente principal ---
-
-_agent = Agent(
-    model=_make_model(),
-    instructions=_SYSTEM_PROMPT,
-    tools=[
-        search,
-        github_list_repos,
-        github_recent_commits,
-        github_open_prs,
-        github_open_issues,
-        github_get_file,
-        ask_writer,
-        ask_designer,
-        ask_developer,
-    ],
-    markdown=True,
-    show_tool_calls=False,
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=10),
+    retry=retry_if_exception_type(Exception),
+    reraise=True,
 )
+async def _call_llm(messages: list) -> str:
+    """Executa o loop de tool calling até obter resposta final."""
+    while True:
+        response = await _client.chat.completions.create(
+            model=config.DEEPSEEK_MODEL,
+            messages=messages,
+            tools=_TOOLS,
+            tool_choice="auto",
+            extra_body={"thinking": {"type": "disabled"}},
+        )
+
+        choice = response.choices[0]
+        msg = choice.message
+
+        if choice.finish_reason == "tool_calls":
+            messages.append(msg.model_dump(exclude_unset=True))
+            for tc in msg.tool_calls:
+                args = json.loads(tc.function.arguments)
+                logger.info("Tool call: %s(%s)", tc.function.name, args)
+                result = _dispatch(tc.function.name, args)
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": result,
+                })
+        else:
+            return msg.content or ""
 
 
 async def run(message: str, user_id: int) -> str:
@@ -165,19 +271,17 @@ async def run(message: str, user_id: int) -> str:
 
     save_message("user", message)
 
-    # Injeta o histórico do dia como contexto adicional
     history = get_today_messages()
+    messages = [{"role": "system", "content": _SYSTEM_PROMPT}]
+
     if len(history) > 1:
-        history_text = "\n".join(
-            f"{m['role'].upper()}: {m['content']}" for m in history[:-1]
-        )
-        full_message = f"<historico_do_dia>\n{history_text}\n</historico_do_dia>\n\n{message}"
-    else:
-        full_message = message
+        for m in history[:-1]:
+            messages.append({"role": m["role"], "content": m["content"]})
+
+    messages.append({"role": "user", "content": message})
 
     try:
-        response = await _agent.arun(full_message)
-        content = response.content
+        content = await _call_llm(messages)
         save_message("assistant", content)
         return content
     except Exception:
