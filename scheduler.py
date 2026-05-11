@@ -9,22 +9,20 @@ logger = logging.getLogger(__name__)
 _scheduler = AsyncIOScheduler()
 
 
-async def _run_diary(app):
+async def _run_diary():
     from skills.diary import generate_diary
     logger.info("Scheduler: iniciando geração automática do diário.")
     try:
-        result = await generate_diary()
-        await app.bot.send_message(chat_id=config.AUTHORIZED_USER_ID, text=result)
-        logger.info("Scheduler: diário enviado com sucesso.")
+        await generate_diary()
+        logger.info("Scheduler: diário salvo com sucesso.")
     except Exception:
         logger.exception("Scheduler: erro ao gerar diário automático.")
 
 
-def start_scheduler(app):
+def start_scheduler(_app=None):
     _scheduler.add_job(
         _run_diary,
         trigger=CronTrigger(hour=config.DIARY_HOUR, minute=config.DIARY_MINUTE),
-        args=[app],
         id="daily_diary",
         replace_existing=True,
     )

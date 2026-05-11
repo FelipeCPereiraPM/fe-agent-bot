@@ -95,18 +95,13 @@ async def generate_diary() -> str:
 
 def _get_today_history() -> str:
     """Retorna o histórico da conversa do dia atual como texto."""
-    # TODO: conectar ao memory.manager quando o PostgreSQL estiver configurado
-    # Exemplo de integração futura:
-    #   from memory.manager import get_today_messages
-    #   messages = get_today_messages()
-    #   return "\n".join(f"{m['role'].upper()}: {m['content']}" for m in messages)
-    return ""
+    from memory.manager import get_today_messages
+    messages = get_today_messages()
+    return "\n".join(f"{m['role'].upper()}: {m['content']}" for m in messages)
 
 
 def _save_diary(date_str: str, content: str) -> None:
-    """Salva o diário no PostgreSQL."""
-    # TODO: conectar ao memory.manager quando o PostgreSQL estiver configurado
-    # Exemplo de integração futura:
-    #   from memory.manager import save_diary
-    #   save_diary(date_str, content)
-    logger.warning("_save_diary: banco não configurado ainda — diário não persistido.")
+    """Salva o diário no PostgreSQL e limpa as mensagens do dia."""
+    from memory.manager import save_diary, clear_today_messages
+    save_diary(date_str, content)
+    clear_today_messages()

@@ -3,6 +3,7 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
 import config
+from memory.manager import validate_connection, init_db
 from scheduler import start_scheduler
 
 logging.basicConfig(
@@ -83,6 +84,9 @@ def _split_message(text: str, limit: int = 4096) -> list[str]:
 
 
 def main():
+    validate_connection()
+    init_db()
+
     app = ApplicationBuilder().token(config.TELEGRAM_BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("diario", cmd_diario_date))

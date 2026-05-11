@@ -45,8 +45,8 @@ GOOGLE_REFRESH_TOKEN = _optional("GOOGLE_REFRESH_TOKEN")
 DATABASE_URL = _require("DATABASE_URL")
 
 # Diário automático
-DIARY_HOUR = int(_optional("DIARY_HOUR", "21"))
-DIARY_MINUTE = int(_optional("DIARY_MINUTE", "0"))
+DIARY_HOUR = int(_optional("DIARY_HOUR", "23"))
+DIARY_MINUTE = int(_optional("DIARY_MINUTE", "59"))
 
 
 if __name__ == "__main__":
