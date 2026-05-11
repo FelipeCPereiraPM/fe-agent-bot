@@ -34,5 +34,7 @@ def start_scheduler(_app=None):
 
 
 async def start_scheduler_async(app) -> None:
+    """Inicia o scheduler dentro do event loop ativo do Telegram."""
     _scheduler.start()
     logger.info("Scheduler iniciado dentro do event loop.")
+
