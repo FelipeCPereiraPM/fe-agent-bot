@@ -199,6 +199,7 @@ _TOOLS = [
 ]
 
 
+
 # --- Despacho de ferramentas ---
 
 def _dispatch(name: str, args: dict) -> str:

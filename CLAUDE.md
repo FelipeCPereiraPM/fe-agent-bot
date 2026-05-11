@@ -11,8 +11,8 @@ Agente orquestrador pessoal do Fe, acessível via Telegram. Analisa contexto rea
 | Camada | Tecnologia |
 |---|---|
 | Interface | Telegram — `python-telegram-bot` |
-| Framework de agente | Agno |
-| LLM | Gemini 2.0 Flash via OpenRouter |
+| Orquestrador | Custom (OpenAI SDK + Manual Function Calling) |
+| LLM | DeepSeek Chat (via OpenAI SDK) |
 | Memória | PostgreSQL (Railway) |
 | Web search | Tavily API |
 | GitHub | PyGithub — read-only |
@@ -25,16 +25,17 @@ Agente orquestrador pessoal do Fe, acessível via Telegram. Analisa contexto rea
 ## Arquitetura
 
 ```
-Telegram (Fe)
+Telegram (Felipe)
     ↓
-Orquestrador (Agno + Gemini 2.0 Flash / OpenRouter)
+Orquestrador (Custom Python + OpenAI SDK + DeepSeek)
     ↓
     ├── Responde direto
     ├── Busca contexto → GitHub / Google Agenda / n8n / Tavily
-    └── Aciona sub-agente → Redator / Designer / Programador
+    └── Aciona sub-agente → Redator / Designer / Programador (OpenAI Call)
                     ↓
         Resposta consolidada → Telegram
 ```
+
 
 ---
 
